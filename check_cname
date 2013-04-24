@@ -1,0 +1,31 @@
+#!/usr/bin/php -q
+<?php
+# Nagios plugin specifically for checking CNAMEs
+# See: https://github.com/nmcclain/home/ned/check_cname
+
+$options = getopt("q:r:");
+if (isset($options["q"])) { $query = $options["q"]; } else { usage(); }
+if (isset($options["r"])) { $expected_result = $options["r"]; } else { usage(); }
+
+$raw_result = `host $query`;
+
+if (preg_match('/^'.$query.' is an alias for (.*)/', $raw_result, $matches)) {
+	if ($matches[1] == $expected_result) {
+		echo "CNAME OK: ".$query." returns ".$expected_result."\n";
+		exit(0);
+	}
+	echo "CNAME CRITICAL: ".$query." returns ".$matches[1]."\n";
+} else {
+	echo "CNAME CRITICAL: lookup failed\n";
+}
+
+exit(1);
+
+
+#########
+function usage() {
+	echo "Usage: check_cname -q <hostname> -r <expected_result>\n";
+	echo "Usage example: check_cname -q www.cnn.com -r www.cnn.com.vgtf.net.\n";
+	exit(1);
+}
+
